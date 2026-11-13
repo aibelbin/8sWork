@@ -104,6 +104,16 @@ All pages are mobile-friendly. Every page except `/login` and `/auth/*` redirect
 - **`/applications/[id]`**: edit any field, rounds as a timeline with inline add/edit, delete with confirmation.
 - **`/settings`**: digest on/off toggle and sign-out.
 
+## Auto-fill (added after iteration 1 review)
+
+The New application page has an "Auto-fill from a posting" box with three tabs: **Paste text**, **Screenshot** (file picker, or ⌘V anywhere on the page) and **Link**.
+- **Extract** sends the input to Groq (`qwen/qwen3.8-27b`, free tier). The model is asked for a strict JSON schema, and the app validates the answer again itself. Fields: company, role, apply method, contact email, job link, location, CTC, deadline, job type, notes.
+- The result only fills the form. Nothing is saved until the user reviews and clicks Add. "Where you found it" stays manual.
+- Screenshots are shrunk in the browser to a JPEG under 900 KB (base64) to stay under the 1 MB server-action limit.
+- Links are fetched by our server. It accepts http(s) only, resolves DNS and rejects private, loopback, link-local and reserved addresses on every redirect (max 3), times out after 10 s and reads at most 2 MB. The page is reduced to its title, any JSON-LD job data and visible text, capped at 12,000 characters. Login-walled sites (LinkedIn, Naukri) return an error suggesting a screenshot.
+- If `GROQ_API_KEY` is unset, Groq rate-limits or errors, or no company or role is found, the user sees a message and fills the form manually.
+- Only signed-in users can call the extract actions.
+
 ## Follow-up rules
 
 One pure function, `suggestFollowUp(application, event, today)`. It runs only on these events: creating an application, changing its status, adding or updating a round, or clicking **Checked**. When none of these happen, `follow_up_on` is left alone, so a date set by hand stays. In forms, the suggestion pre-fills the field and the user can change it before saving. Quick actions on the Today page save the suggestion directly.
@@ -154,6 +164,8 @@ Server-only environment variables, managed with `vercel env`:
 - `GMAIL_USER`
 - `GMAIL_APP_PASSWORD`
 - `CRON_SECRET`
+
+- `GROQ_API_KEY` (optional; enables auto-fill)
 
 Public:
 
