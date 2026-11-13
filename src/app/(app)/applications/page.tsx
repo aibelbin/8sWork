@@ -22,12 +22,14 @@ async function ApplicationsPageContent({ searchParams }: { searchParams: SearchP
   const q = get('q');
   const status = get('status');
   const source = get('source');
-  const sort = get('sort') === 'follow_up' ? 'follow_up' : 'applied';
+  const sort = (['follow_up', 'status'] as const).find((s) => s === get('sort')) ?? 'applied';
 
   const { supabase } = await requireUser();
   let query = supabase.from('applications').select('*');
   if ((STATUSES as readonly string[]).includes(status)) query = query.eq('status', status);
   if ((SOURCES as readonly string[]).includes(source)) query = query.eq('source', source);
+  // Postgres orders enums by declaration: to apply → applied → in progress → offer → rejected → ghosted → withdrawn.
+  if (sort === 'status') query = query.order('status');
   query =
     sort === 'follow_up'
       ? query.order('follow_up_on', { ascending: true, nullsFirst: false })
@@ -52,6 +54,7 @@ async function ApplicationsPageContent({ searchParams }: { searchParams: SearchP
         <select name="sort" aria-label="Sort" defaultValue={sort} className={cn(selectClass, 'w-auto')}>
           <option value="applied">Newest applied</option>
           <option value="follow_up">Next follow-up</option>
+          <option value="status">Status</option>
         </select>
         <Button type="submit" variant="outline">Apply</Button>
       </form>
