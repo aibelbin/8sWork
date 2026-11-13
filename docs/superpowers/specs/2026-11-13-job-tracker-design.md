@@ -11,13 +11,17 @@ Out of scope for iteration 1: finding or importing jobs, sharing applications be
 ## Stack
 
 - **Next.js (App Router)** on **Vercel**, with Tailwind and shadcn/ui.
-- **Supabase** (via Vercel Marketplace): Postgres database and Google sign-in (Supabase Auth, `@supabase/ssr` cookies).
+- **Supabase** (via Vercel Marketplace): Postgres database and email + password sign-in (Supabase Auth, `@supabase/ssr` cookies).
 - **Vercel Cron**: one daily job for the digest.
 - **Gmail SMTP** through `nodemailer` with an app password for the digest email. No domain needed; can switch to Resend later if a domain is bought.
 
 ## Users and access
 
-- Sign-in is Google only. A `profiles` row is created on first sign-in.
+- Sign-in is email + password through Supabase Auth, which stores only password hashes. The app never stores passwords itself.
+- New accounts must confirm their email before signing in. Supabase sends confirmation and password-reset emails through Gmail SMTP (the same Gmail account as the digest).
+- Email links use the token-hash flow (`/auth/confirm?token_hash=…&type=…`), so they work on a different device from the one used to sign up.
+- Passwords are 8–72 characters (72 is bcrypt's limit).
+- A `profiles` row is created when an account is created.
 - Each user's data is private. Row-level security (RLS) is enabled on every table with the policy `user_id = auth.uid()` for select, insert, update and delete.
 - The browser only ever holds the Supabase anon key.
 
@@ -28,8 +32,8 @@ Out of scope for iteration 1: finding or importing jobs, sharing applications be
 | Field | Type | Notes |
 |---|---|---|
 | `id` | uuid | primary key, equals `auth.users.id` |
-| `email` | text | from Google |
-| `name` | text | from Google |
+| `email` | text | the sign-up email |
+| `name` | text | nullable; unused in iteration 1 |
 | `digest_enabled` | boolean | default `true` |
 | `last_digest_on` | date | nullable; IST date of last successful digest |
 
@@ -72,9 +76,14 @@ Out of scope for iteration 1: finding or importing jobs, sharing applications be
 
 ## Pages
 
-All pages are mobile-friendly. Every page except `/login` redirects signed-out users to `/login`.
+All pages are mobile-friendly. Every page except `/login` and `/auth/*` redirects signed-out users to `/login`.
 
-- **`/login`**: one "Continue with Google" button.
+- **`/login`**: three modes on one page:
+  - **Sign in**: email + password.
+  - **Create an account** (`?mode=signup`): email + password, then "check your email".
+  - **Forgot password** (`?mode=forgot`): email only. The reply is the same whether or not the account exists.
+- **`/auth/confirm`**: verifies the token from a confirmation email (then goes to `/`) or a reset email (then goes to `/reset-password`).
+- **`/reset-password`**: new password + confirm, for a signed-in user arriving from a reset link.
 - **`/` (Today)**: four lists:
   - Overdue: `follow_up_on < today`.
   - Due today: `follow_up_on = today`.
@@ -152,7 +161,10 @@ Public:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_SITE_URL`, used for links in emails
 
-Google OAuth client is configured in Google Cloud Console and entered in Supabase Auth settings.
+Supabase Auth settings (dashboard):
+- Custom SMTP: `smtp.gmail.com`, port 465, the Gmail address and app password.
+- "Confirm sign up" and "Reset password" email templates link to `{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email` and `…&type=recovery`.
+- Redirect URLs include `http://localhost:3000/auth/confirm` and the production `/auth/confirm`.
 
 ## Testing
 
@@ -161,7 +173,7 @@ Google OAuth client is configured in Google Cloud Console and entered in Supabas
   - `buildDigests`: boundaries for overdue, today and the 2-day deadline window in IST; users with no items get nothing; closed applications are excluded.
 - **RLS check:** a script signs in as two test users and confirms user B cannot select or update user A's application or rounds.
 - **Manual end-to-end on a Vercel preview:**
-  1. Sign in with Google.
+  1. Create an account, confirm it from the email, and sign in. Also try forgot password.
   2. Add an application and a round, and confirm they show on the Today page.
   3. Call the cron route with the secret and confirm the email arrives.
   4. Call it again and confirm no second email.
