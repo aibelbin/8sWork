@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDate } from '@/lib/dates';
-import { label, SOURCES, STATUSES, type Application } from '@/lib/domain';
+import { cn } from '@/lib/utils';
+import { SOURCES, STATUSES, type Application } from '@/lib/domain';
 import { requireUser } from '@/lib/supabase/server';
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -48,7 +49,7 @@ async function ApplicationsPageContent({ searchParams }: { searchParams: SearchP
         <Input name="q" aria-label="Search" placeholder="Search company or role" defaultValue={q} className="w-full sm:w-56" />
         <NativeSelect name="status" aria-label="Filter by status" options={STATUSES} placeholder="All statuses" defaultValue={status} className="w-auto" />
         <NativeSelect name="source" aria-label="Filter by source" options={SOURCES} placeholder="All sources" defaultValue={source} className="w-auto" />
-        <select name="sort" aria-label="Sort" defaultValue={sort} className={`${selectClass} w-auto`}>
+        <select name="sort" aria-label="Sort" defaultValue={sort} className={cn(selectClass, 'w-auto')}>
           <option value="applied">Newest applied</option>
           <option value="follow_up">Next follow-up</option>
         </select>
@@ -68,7 +69,7 @@ async function ApplicationsPageContent({ searchParams }: { searchParams: SearchP
                   <TableHead>Company</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Source</TableHead>
+                  <TableHead>CTC</TableHead>
                   <TableHead>Applied</TableHead>
                   <TableHead>Follow up</TableHead>
                 </TableRow>
@@ -81,7 +82,7 @@ async function ApplicationsPageContent({ searchParams }: { searchParams: SearchP
                     </TableCell>
                     <TableCell>{a.role}</TableCell>
                     <TableCell><StatusSelect id={a.id} status={a.status} /></TableCell>
-                    <TableCell>{label(a.source)}</TableCell>
+                    <TableCell>{a.salary ?? '—'}</TableCell>
                     <TableCell>{date(a.applied_on)}</TableCell>
                     <TableCell>{date(a.follow_up_on)}</TableCell>
                   </TableRow>
@@ -95,7 +96,8 @@ async function ApplicationsPageContent({ searchParams }: { searchParams: SearchP
                 <div>
                   <Link href={`/applications/${a.id}`} className="font-medium hover:underline">{a.company}</Link>
                   <p className="text-sm text-muted-foreground">
-                    {a.role} · {label(a.source)}
+                    {a.role}
+                    {a.salary && ` · ${a.salary}`}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-2 text-sm">

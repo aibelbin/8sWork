@@ -4,7 +4,7 @@ import { label } from '@/lib/domain';
 import { cn } from '@/lib/utils';
 
 export const selectClass =
-  'h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50';
+  'h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none dark:bg-input/30 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50';
 
 export function NativeSelect({
   options,

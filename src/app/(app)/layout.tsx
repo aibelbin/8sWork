@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { buttonVariants } from '@/components/ui/button';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -15,6 +16,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Link href="/applications/new" className={buttonVariants({ size: 'sm' })}>
             + New
           </Link>
+          <ThemeToggle />
         </nav>
       </header>
       <main>{children}</main>

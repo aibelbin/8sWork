@@ -107,8 +107,8 @@ export function ApplicationForm({ application, today }: { application?: Applicat
           <Field label="Location" htmlFor="location" errors={errors('location')}>
             <Input id="location" name="location" placeholder="e.g. Bangalore / Remote" defaultValue={value('location')} />
           </Field>
-          <Field label="Salary / stipend" htmlFor="salary" errors={errors('salary')}>
-            <Input id="salary" name="salary" placeholder="e.g. 12 LPA" defaultValue={value('salary')} />
+          <Field label="CTC / package" htmlFor="salary" errors={errors('salary')}>
+            <Input id="salary" name="salary" placeholder="e.g. 12 LPA or 30k/month stipend" defaultValue={value('salary')} />
           </Field>
           <Field label="Notes" htmlFor="notes" errors={errors('notes')} className="sm:col-span-2">
             <Textarea id="notes" name="notes" rows={4} defaultValue={value('notes')} />
