@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { applicationSchema, roundSchema, withAppliedOn } from './schemas';
+import { applicationSchema, emailOnlySchema, newPasswordSchema, roundSchema, signInSchema, signUpSchema, withAppliedOn } from './schemas';
 
 const valid = { company: 'Acme', role: 'SDE Intern', status: 'applied', apply_method: 'email', source: 'college_group' };
 
@@ -66,5 +66,29 @@ describe('roundSchema', () => {
   it('allows no time but requires a name', () => {
     expect(roundSchema.parse({ name: 'HR', scheduled_at: '', result: 'awaiting' }).scheduled_at).toBeNull();
     expect(roundSchema.safeParse({ name: ' ', result: 'upcoming' }).success).toBe(false);
+  });
+});
+
+describe('auth schemas', () => {
+  it('normalises the email and requires a password to sign in', () => {
+    expect(signInSchema.parse({ email: '  Me@Example.COM ', password: 'x' }).email).toBe('me@example.com');
+    expect(signInSchema.safeParse({ email: 'me@example.com', password: '' }).success).toBe(false);
+  });
+
+  it('requires 8 to 72 characters for a new password', () => {
+    expect(z.flattenError(signUpSchema.safeParse({ email: 'me@example.com', password: 'short' }).error!).fieldErrors.password).toEqual([
+      'Use at least 8 characters',
+    ]);
+    expect(signUpSchema.safeParse({ email: 'me@example.com', password: 'x'.repeat(73) }).success).toBe(false);
+    expect(signUpSchema.safeParse({ email: 'me@example.com', password: 'longenough' }).success).toBe(true);
+  });
+
+  it('rejects a bad email for password reset', () => {
+    expect(emailOnlySchema.safeParse({ email: 'nope' }).success).toBe(false);
+  });
+
+  it('requires the two new passwords to match', () => {
+    const r = newPasswordSchema.safeParse({ password: 'longenough', confirm: 'different1' });
+    expect(z.flattenError(r.error!).fieldErrors.confirm).toEqual(['Passwords do not match']);
   });
 });

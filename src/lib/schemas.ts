@@ -46,3 +46,14 @@ export type RoundInput = z.infer<typeof roundSchema>;
 export function withAppliedOn<T extends { status: Status; applied_on: string | null }>(input: T, today: ISODate): T {
   return { ...input, applied_on: input.status === 'to_apply' ? null : (input.applied_on ?? today) };
 }
+
+const email = z.string().trim().toLowerCase().pipe(z.email({ error: 'Enter a valid email' }));
+// bcrypt, which Supabase Auth uses, ignores anything past 72 bytes.
+const newPassword = z.string().min(8, 'Use at least 8 characters').max(72, 'Use at most 72 characters');
+
+export const signInSchema = z.object({ email, password: z.string().min(1, 'Enter your password') });
+export const signUpSchema = z.object({ email, password: newPassword });
+export const emailOnlySchema = z.object({ email });
+export const newPasswordSchema = z
+  .object({ password: newPassword, confirm: z.string() })
+  .refine((d) => d.password === d.confirm, { path: ['confirm'], error: 'Passwords do not match' });
