@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { z } from 'zod';
 import { ApplicationForm } from '@/components/application-form';
 import { DeleteApplicationButton } from '@/components/delete-application-button';
+import { RoundList } from '@/components/round-list';
 import type { Application, Round } from '@/lib/domain';
 import { requireUser } from '@/lib/supabase/server';
 
@@ -28,6 +29,7 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
         )}
       </div>
       <ApplicationForm application={app} />
+      <RoundList applicationId={app.id} rounds={app.rounds} />
       <DeleteApplicationButton id={app.id} />
     </div>
   );
