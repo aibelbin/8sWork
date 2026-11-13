@@ -1,9 +1,11 @@
+import { Suspense } from 'react';
+import { PageLoading } from '@/components/page-loading';
 import { Button } from '@/components/ui/button';
 import { setDigest, signOut } from '@/app/actions/settings';
 import type { Profile } from '@/lib/domain';
 import { requireUser } from '@/lib/supabase/server';
 
-export default async function SettingsPage() {
+async function SettingsPageContent() {
   const { supabase, user } = await requireUser();
   const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
   if (error) throw new Error(error.message);
@@ -34,5 +36,14 @@ export default async function SettingsPage() {
         </form>
       </section>
     </div>
+  );
+}
+
+// Per-user data streams in behind the fallback (Cache Components needs the data access inside <Suspense>).
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <SettingsPageContent />
+    </Suspense>
   );
 }

@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+import { PageLoading } from '@/components/page-loading';
 import Link from 'next/link';
 import { NativeSelect, selectClass } from '@/components/form-controls';
 import { StatusSelect } from '@/components/status-select';
@@ -10,7 +12,7 @@ import { requireUser } from '@/lib/supabase/server';
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-export default async function ApplicationsPage({ searchParams }: { searchParams: SearchParams }) {
+async function ApplicationsPageContent({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const get = (key: string) => {
     const v = params[key];
@@ -106,5 +108,14 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
         </>
       )}
     </div>
+  );
+}
+
+// Per-user data streams in behind the fallback (Cache Components needs the data access inside <Suspense>).
+export default function ApplicationsPage({ searchParams }: { searchParams: SearchParams }) {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <ApplicationsPageContent searchParams={searchParams} />
+    </Suspense>
   );
 }

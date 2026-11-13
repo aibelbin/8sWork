@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+import { PageLoading } from '@/components/page-loading';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { TodayItem } from '@/components/today-item';
@@ -6,7 +8,7 @@ import type { Application, Round } from '@/lib/domain';
 import { collectDue, isEmpty, TODAY_WINDOWS } from '@/lib/due';
 import { requireUser } from '@/lib/supabase/server';
 
-export default async function TodayPage() {
+async function TodayPageContent() {
   const { supabase } = await requireUser();
   const [apps, rounds] = await Promise.all([
     supabase.from('applications').select('*'),
@@ -60,5 +62,14 @@ function Section({ title, count, children }: { title: string; count: number; chi
       </h2>
       <ul className="space-y-2">{children}</ul>
     </section>
+  );
+}
+
+// Per-user data streams in behind the fallback (Cache Components needs the data access inside <Suspense>).
+export default function TodayPage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <TodayPageContent />
+    </Suspense>
   );
 }

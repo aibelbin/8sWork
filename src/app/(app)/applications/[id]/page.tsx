@@ -1,12 +1,15 @@
+import { Suspense } from 'react';
+import { PageLoading } from '@/components/page-loading';
 import { notFound } from 'next/navigation';
 import { z } from 'zod';
 import { ApplicationForm } from '@/components/application-form';
 import { DeleteApplicationButton } from '@/components/delete-application-button';
 import { RoundList } from '@/components/round-list';
+import { istDate } from '@/lib/dates';
 import type { Application, Round } from '@/lib/domain';
 import { requireUser } from '@/lib/supabase/server';
 
-export default async function ApplicationPage({ params }: { params: Promise<{ id: string }> }) {
+async function ApplicationPageContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) notFound();
   const { supabase } = await requireUser();
@@ -28,9 +31,18 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
           </a>
         )}
       </div>
-      <ApplicationForm application={app} />
+      <ApplicationForm application={app} today={istDate()} />
       <RoundList applicationId={app.id} rounds={app.rounds} />
       <DeleteApplicationButton id={app.id} />
     </div>
+  );
+}
+
+// Per-user data streams in behind the fallback (Cache Components needs the data access inside <Suspense>).
+export default function ApplicationPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <ApplicationPageContent params={params} />
+    </Suspense>
   );
 }

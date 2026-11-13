@@ -2,8 +2,11 @@ import 'server-only';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { connection } from 'next/server';
 
 export async function createClient() {
+  // Every page here is per-user; mark it request-time before the auth client reads the clock (Cache Components).
+  await connection();
   const cookieStore = await cookies();
   return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     cookies: {

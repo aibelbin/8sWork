@@ -7,19 +7,18 @@ import { Field, NativeSelect } from '@/components/form-controls';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { istDate } from '@/lib/dates';
 import { APPLY_METHODS, JOB_TYPES, SOURCES, STATUSES, type Application, type Round, type Status } from '@/lib/domain';
 import { suggestFollowUp } from '@/lib/follow-up';
 
 type Tracked = { status: Status; appliedOn: string; deadline: string };
 
-export function ApplicationForm({ application }: { application?: Application & { rounds: Round[] } }) {
+// `today` comes from the server so a prerendered page never bakes in a stale date.
+export function ApplicationForm({ application, today }: { application?: Application & { rounds: Round[] }; today: string }) {
   const isNew = !application;
   const [state, formAction, pending] = useActionState(
     isNew ? createApplication : updateApplication.bind(null, application.id),
     undefined,
   );
-  const today = istDate();
 
   // Status and the dates it depends on are controlled so the follow-up suggestion updates as they change.
   const [tracked, setTracked] = useState<Tracked>({
