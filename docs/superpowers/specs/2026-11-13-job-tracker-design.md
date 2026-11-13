@@ -89,7 +89,7 @@ All pages are mobile-friendly. Every page except `/login` redirects signed-out u
   - **Change status**.
 - **`/applications`**: every application as a table on desktop and cards on mobile. Search by company or role, filter by status and source, and sort by applied date or follow-up date. Status can be changed inline.
 - **`/applications/new`**: quick-add form.
-  - Shows company, role, method and source by default; status defaults to `applied` and `applied_on` to today.
+  - Shows company, role, method, source, status (default `applied`), applied-on date (default today; replaced by the deadline field when status is `to_apply`) and follow-up date.
   - "More details" expands to the remaining fields.
   - The suggested `follow_up_on` is pre-filled and editable.
 - **`/applications/[id]`**: edit any field, rounds as a timeline with inline add/edit, delete with confirmation.
@@ -99,20 +99,20 @@ All pages are mobile-friendly. Every page except `/login` redirects signed-out u
 
 One pure function, `suggestFollowUp(application, event, today)`. It runs only on these events: creating an application, changing its status, adding or updating a round, or clicking **Checked**. When none of these happen, `follow_up_on` is left alone, so a date set by hand stays. In forms, the suggestion pre-fills the field and the user can change it before saving. Quick actions on the Today page save the suggestion directly.
 
-| Situation | Suggested `follow_up_on` |
+The suggestion depends on the application's current state. The event only picks the base date for `applied`. **Checked** uses the same rules.
+
+| Situation (checked top to bottom) | Suggested `follow_up_on` |
 |---|---|
+| status `rejected`, `ghosted` or `withdrawn` | null |
 | `to_apply` with deadline | deadline − 1 day |
 | `to_apply` without deadline | null |
-| becomes `applied` | `applied_on` + 7 days |
-| round added or updated with `scheduled_at` | date of `scheduled_at` (IST) + 1 day |
-| becomes `in_progress` with an `upcoming` round that has `scheduled_at` | earliest such round's date (IST) + 1 day |
-| `in_progress`, no round scheduled | today + 5 days |
-| **Checked** on `to_apply` | same as the `to_apply` rows above |
-| **Checked** on `applied` | today + 7 days |
-| **Checked** on `in_progress` | same as the two `in_progress` rows above, with "becomes" read as "is" |
-| **Checked** on `offer` | today + 3 days |
-| becomes `offer` | today + 3 days |
-| becomes `rejected`, `ghosted` or `withdrawn` | null |
+| `offer` | today + 3 days |
+| has an `upcoming` round with `scheduled_at` | earliest such round's date (IST) + 1 day |
+| `in_progress` | today + 5 days |
+| `applied`, on create or status change | `applied_on` (or today) + 7 days |
+| `applied`, on **Checked** or round saved | today + 7 days |
+
+Rounds that are `passed`, `failed`, `awaiting` or unscheduled never set the date.
 
 "Today" is always the current date in `Asia/Kolkata`.
 
