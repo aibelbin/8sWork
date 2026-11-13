@@ -39,14 +39,14 @@ export const EXTRACTION_JSON_SCHEMA = {
     role: nullable('Job title or role.'),
     apply_method: nullableEnum(
       APPLY_METHODS,
-      'email = send CV/resume to an email address; form = fill a Google Form or application form; portal = apply on LinkedIn, a job board or the careers site; referral = needs a referral; other.',
+      'email = send CV/resume to an email address; form = fill a Google Form or application form; portal = an Apply button on a careers site, LinkedIn or a job board; referral = needs a referral; other.',
     ),
     contact_email: nullable('Email address to apply to or contact, exactly as written.'),
     job_url: nullable('Link to the posting or application form (http/https).'),
     location: nullable('Work location(s), or Remote/Hybrid.'),
     salary: nullable('CTC, package or stipend exactly as written, e.g. "12 LPA" or "₹30,000/month".'),
     deadline: nullable('Last date to apply as YYYY-MM-DD.'),
-    job_type: nullableEnum(JOB_TYPES, 'internship, full_time or contract.'),
+    job_type: nullableEnum(JOB_TYPES, 'internship (incl. intern/trainee), full_time (incl. Full-time/permanent/FTE) or contract.'),
     notes: nullable('At most 3 short lines: eligibility (batch, CGPA, skills) and any special apply instructions (e.g. email subject line).'),
   },
 } as const;

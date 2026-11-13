@@ -10,8 +10,8 @@ import { requireUser } from '@/lib/supabase/server';
 
 export type ExtractResult = { job?: ExtractedJob; error?: string };
 
-// Keeps a request within the free tier's per-minute token budget.
-const MAX_TEXT_CHARS = 12_000;
+// About 2,000 tokens, so one key's free tier (7,000 input tokens/minute) allows a few extractions a minute.
+const MAX_TEXT_CHARS = 8_000;
 const MAX_IMAGE_CHARS = 900_000; // base64 data URL; keeps the request under the 1 MB server-action limit
 const IMAGE_DATA_URL = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
 

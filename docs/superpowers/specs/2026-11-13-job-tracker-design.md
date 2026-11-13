@@ -110,7 +110,7 @@ The New application page has an "Auto-fill from a posting" box with three tabs: 
 - **Extract** sends the input to Groq (`qwen/qwen3.8-27b`, free tier). The model is asked for a strict JSON schema, and the app validates the answer again itself. Fields: company, role, apply method, contact email, job link, location, CTC, deadline, job type, notes.
 - The result only fills the form. Nothing is saved until the user reviews and clicks Add. "Where you found it" stays manual.
 - Screenshots are shrunk in the browser to a JPEG under 900 KB (base64) to stay under the 1 MB server-action limit.
-- Links are fetched by our server. It accepts http(s) only, resolves DNS and rejects private, loopback, link-local and reserved addresses on every redirect (max 3), times out after 10 s and reads at most 2 MB. The page is reduced to its title, any JSON-LD job data and visible text, capped at 12,000 characters. Login-walled sites (LinkedIn, Naukri) return an error suggesting a screenshot.
+- Links are fetched by our server. It accepts http(s) only, resolves DNS and rejects private, loopback, link-local and reserved addresses on every redirect (max 3), times out after 10 s and reads at most 2 MB. The page is reduced to its title, any JSON-LD job data and visible text, capped at 8,000 characters. Login-walled sites (LinkedIn, Naukri) return an error suggesting a screenshot.
 - If `GROQ_API_KEY` is unset, Groq rate-limits or errors, or no company or role is found, the user sees a message and fills the form manually.
 - Only signed-in users can call the extract actions.
 
