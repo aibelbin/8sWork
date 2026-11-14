@@ -5,8 +5,9 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { istDate } from '@/lib/dates';
 import type { Posting } from '@/lib/domain';
-import type { ActionResult } from '@/lib/form-state';
+import type { ActionResult, FormState } from '@/lib/form-state';
 import { applicationFromPosting } from '@/lib/postings';
+import { postingSchema } from '@/lib/schemas';
 import { requireUser } from '@/lib/supabase/server';
 
 export async function trackPosting(id: string): Promise<ActionResult> {
@@ -33,4 +34,15 @@ export async function removePosting(id: string): Promise<ActionResult> {
   if (error) return { error: error.message };
   revalidatePath('/jobs');
   return {};
+}
+
+export async function sharePosting(_prev: FormState, formData: FormData): Promise<FormState> {
+  const { supabase } = await requireUser();
+  const values = Object.fromEntries(formData) as Record<string, string>;
+  const result = postingSchema.safeParse(values);
+  if (!result.success) return { errors: z.flattenError(result.error).fieldErrors, values };
+  const { error } = await supabase.from('postings').insert(result.data);
+  if (error) return { message: error.message, values };
+  revalidatePath('/jobs');
+  redirect('/jobs');
 }
