@@ -12,6 +12,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <nav className="flex flex-wrap items-center gap-4 text-sm">
           <Link href="/" className="hover:underline">Today</Link>
           <Link href="/applications" className="hover:underline">Applications</Link>
+          <Link href="/jobs" className="hover:underline">Find jobs</Link>
           <Link href="/settings" className="hover:underline">Settings</Link>
           <Link href="/applications/new" className={buttonVariants({ size: 'sm' })}>
             + New
