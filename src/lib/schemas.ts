@@ -27,6 +27,11 @@ export const applicationSchema = z.object({
 });
 export type ApplicationInput = z.infer<typeof applicationSchema>;
 
+export const postingSchema = applicationSchema
+  .pick({ company: true, role: true, job_url: true, contact_email: true, job_type: true, location: true, salary: true, deadline: true })
+  .extend({ apply_method: z.enum(APPLY_METHODS, { error: 'Choose how to apply' }), details: optionalText });
+export type PostingInput = z.infer<typeof postingSchema>;
+
 export const roundSchema = z.object({
   name: z.string().trim().min(1, 'Round name is required').max(100),
   scheduled_at: z.preprocess(

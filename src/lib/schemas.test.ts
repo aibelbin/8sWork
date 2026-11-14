@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { applicationSchema, roundSchema, signInSchema, signUpSchema, withAppliedOn } from './schemas';
+import { applicationSchema, postingSchema, roundSchema, signInSchema, signUpSchema, withAppliedOn } from './schemas';
 
 const valid = { company: 'Acme', role: 'SDE Intern', status: 'applied', apply_method: 'email', source: 'college_group' };
 
@@ -81,5 +81,17 @@ describe('auth schemas', () => {
     ]);
     expect(signUpSchema.safeParse({ email: 'me@example.com', password: 'x'.repeat(73) }).success).toBe(false);
     expect(signUpSchema.safeParse({ email: 'me@example.com', password: 'longenough' }).success).toBe(true);
+  });
+});
+
+describe('postingSchema', () => {
+  it('accepts a minimal posting and blanks optional fields to null', () => {
+    const r = postingSchema.safeParse({ company: 'Zoho', role: 'SDE', apply_method: 'form', job_url: '', details: '' });
+    expect(r.success && r.data).toMatchObject({ company: 'Zoho', job_url: null, details: null });
+  });
+
+  it('rejects a missing company, a bad link and a bad email', () => {
+    const r = postingSchema.safeParse({ company: '', role: 'SDE', apply_method: 'form', job_url: 'ftp://x', contact_email: 'nope' });
+    expect(Object.keys(z.flattenError(r.error!).fieldErrors).sort()).toEqual(['company', 'contact_email', 'job_url']);
   });
 });
