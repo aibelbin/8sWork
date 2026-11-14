@@ -15,7 +15,15 @@ import { suggestFollowUp } from '@/lib/follow-up';
 type Tracked = { status: Status; appliedOn: string; deadline: string };
 
 // `today` comes from the server so a prerendered page never bakes in a stale date.
-export function ApplicationForm({ application, today }: { application?: Application & { rounds: Round[] }; today: string }) {
+export function ApplicationForm({
+  application,
+  today,
+  share,
+}: {
+  application?: Application & { rounds: Round[] };
+  today: string;
+  share?: 'own' | 'tracked';
+}) {
   const isNew = !application;
   const [state, formAction, pending] = useActionState(
     isNew ? createApplication : updateApplication.bind(null, application.id),
@@ -132,6 +140,20 @@ export function ApplicationForm({ application, today }: { application?: Applicat
           </div>
         </details>
   
+        {share === 'tracked' ? (
+          <p className="text-sm text-muted-foreground">From Find jobs</p>
+        ) : (
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="share"
+              defaultChecked={state?.values ? state.values.share === 'on' : share === 'own'}
+              className="size-4 accent-primary"
+            />
+            Share this job on Find jobs (anonymous)
+          </label>
+        )}
+
         <Button type="submit" disabled={pending} className="justify-self-start">
           {pending ? 'Saving…' : isNew ? 'Add application' : 'Save changes'}
         </Button>

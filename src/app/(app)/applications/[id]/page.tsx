@@ -9,14 +9,21 @@ import { istDate } from '@/lib/dates';
 import type { Application, Round } from '@/lib/domain';
 import { requireUser } from '@/lib/supabase/server';
 
-async function ApplicationPageContent({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ share?: string }> };
+
+async function ApplicationPageContent({ params, searchParams }: Props) {
+  const [{ id }, { share: shareParam }] = await Promise.all([params, searchParams]);
   if (!z.uuid().safeParse(id).success) notFound();
-  const { supabase } = await requireUser();
-  const { data, error } = await supabase.from('applications').select('*, rounds(*)').eq('id', id).maybeSingle();
+  const { supabase, user } = await requireUser();
+  const { data, error } = await supabase
+    .from('applications')
+    .select('*, rounds(*), posting:postings(created_by)')
+    .eq('id', id)
+    .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) notFound();
-  const app = data as Application & { rounds: Round[] };
+  const app = data as Application & { rounds: Round[]; posting: { created_by: string | null } | null };
+  const share = app.posting ? (app.posting.created_by === user.id ? 'own' : 'tracked') : undefined;
 
   return (
     <div className="space-y-8">
@@ -31,7 +38,12 @@ async function ApplicationPageContent({ params }: { params: Promise<{ id: string
           </a>
         )}
       </div>
-      <ApplicationForm application={app} today={istDate()} />
+      {shareParam === 'failed' && (
+        <p role="alert" className="text-sm text-destructive">
+          Saved, but sharing failed. Tick &quot;Share this job&quot; and save again.
+        </p>
+      )}
+      <ApplicationForm application={app} today={istDate()} share={share} />
       <RoundList applicationId={app.id} rounds={app.rounds} />
       <DeleteApplicationButton id={app.id} />
     </div>
@@ -39,10 +51,10 @@ async function ApplicationPageContent({ params }: { params: Promise<{ id: string
 }
 
 // Per-user data streams in behind the fallback (Cache Components needs the data access inside <Suspense>).
-export default function ApplicationPage({ params }: { params: Promise<{ id: string }> }) {
+export default function ApplicationPage({ params, searchParams }: Props) {
   return (
     <Suspense fallback={<PageLoading />}>
-      <ApplicationPageContent params={params} />
+      <ApplicationPageContent params={params} searchParams={searchParams} />
     </Suspense>
   );
 }

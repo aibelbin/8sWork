@@ -4,10 +4,11 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { addDays, istDate } from '@/lib/dates';
-import { STATUSES } from '@/lib/domain';
+import { STATUSES, type Application } from '@/lib/domain';
 import { updateWithFollowUp } from '@/lib/follow-up-db';
 import type { ActionResult, FormState } from '@/lib/form-state';
 import { applicationSchema, withAppliedOn } from '@/lib/schemas';
+import { syncShare } from '@/lib/share-db';
 import { requireUser } from '@/lib/supabase/server';
 
 function parseApplicationForm(formData: FormData) {
@@ -17,30 +18,37 @@ function parseApplicationForm(formData: FormData) {
   return { values, data: withAppliedOn(result.data, istDate()) };
 }
 
+const SHARE_FAILED = 'Saved, but sharing failed: ';
+
 export async function createApplication(_prev: FormState, formData: FormData): Promise<FormState> {
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
   const parsed = parseApplicationForm(formData);
   if ('errors' in parsed) return { errors: parsed.errors, values: parsed.values };
-  const { data, error } = await supabase.from('applications').insert(parsed.data).select('id').single();
+  const { data, error } = await supabase.from('applications').insert(parsed.data).select().single();
   if (error) return { message: error.message, values: parsed.values };
+  const shareError = await syncShare(supabase, user.id, data as Application, formData.get('share') === 'on');
   revalidatePath('/', 'layout');
-  redirect(`/applications/${data.id}`);
+  redirect(`/applications/${data.id}${shareError ? '?share=failed' : ''}`);
 }
 
 export async function updateApplication(id: string, _prev: FormState, formData: FormData): Promise<FormState> {
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
   const parsed = parseApplicationForm(formData);
   if ('errors' in parsed) return { errors: parsed.errors, values: parsed.values };
-  const { error } = await supabase.from('applications').update(parsed.data).eq('id', id);
+  const { data, error } = await supabase.from('applications').update(parsed.data).eq('id', id).select().single();
   if (error) return { message: error.message, values: parsed.values };
+  const shareError = await syncShare(supabase, user.id, data as Application, formData.get('share') === 'on');
   revalidatePath('/', 'layout');
-  return { ok: true, message: 'Saved' };
+  return shareError ? { message: SHARE_FAILED + shareError } : { ok: true, message: 'Saved' };
 }
 
 export async function deleteApplication(id: string) {
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
+  const { data } = await supabase.from('applications').select('posting_id').eq('id', id).maybeSingle();
   const { error } = await supabase.from('applications').delete().eq('id', id);
   if (error) throw new Error(error.message);
+  // A shared application takes its posting with it; RLS and the created_by filter leave others' postings alone.
+  if (data?.posting_id) await supabase.from('postings').delete().eq('id', data.posting_id).eq('created_by', user.id);
   revalidatePath('/', 'layout');
   redirect('/applications');
 }
