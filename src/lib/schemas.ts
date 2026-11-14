@@ -53,7 +53,3 @@ const newPassword = z.string().min(8, 'Use at least 8 characters').max(72, 'Use 
 
 export const signInSchema = z.object({ email, password: z.string().min(1, 'Enter your password') });
 export const signUpSchema = z.object({ email, password: newPassword });
-export const emailOnlySchema = z.object({ email });
-export const newPasswordSchema = z
-  .object({ password: newPassword, confirm: z.string() })
-  .refine((d) => d.password === d.confirm, { path: ['confirm'], error: 'Passwords do not match' });

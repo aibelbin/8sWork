@@ -6,12 +6,10 @@ import { AuthForm, type AuthMode } from './auth-form';
 const HEADINGS: Record<AuthMode, string> = {
   signin: 'Sign in to keep track of your applications.',
   signup: 'Create an account.',
-  forgot: 'Reset your password.',
 };
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ mode?: string; error?: string }> }) {
-  const { mode: rawMode, error } = await searchParams;
-  const mode: AuthMode = rawMode === 'signup' || rawMode === 'forgot' ? rawMode : 'signin';
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ mode?: string }> }) {
+  const mode: AuthMode = (await searchParams).mode === 'signup' ? 'signup' : 'signin';
   const supabase = await createClient();
   const {
     data: { user },
@@ -25,16 +23,13 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <h1 className="text-2xl font-semibold">Job Tracker</h1>
           <p className="text-muted-foreground">{HEADINGS[mode]}</p>
         </div>
-        {error === 'link' && (
-          <p role="alert" className="text-sm text-destructive">
-            That link is invalid or has expired. Please try again.
-          </p>
-        )}
         <AuthForm key={mode} mode={mode} />
         <div className="flex justify-center gap-4 text-sm">
-          {mode !== 'signin' && <Link href="/login" className="underline">Sign in</Link>}
-          {mode !== 'signup' && <Link href="/login?mode=signup" className="underline">Create an account</Link>}
-          {mode === 'signin' && <Link href="/login?mode=forgot" className="underline">Forgot password?</Link>}
+          {mode === 'signup' ? (
+            <Link href="/login" className="underline">Sign in</Link>
+          ) : (
+            <Link href="/login?mode=signup" className="underline">Create an account</Link>
+          )}
         </div>
       </div>
     </main>

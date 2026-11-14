@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { applicationSchema, emailOnlySchema, newPasswordSchema, roundSchema, signInSchema, signUpSchema, withAppliedOn } from './schemas';
+import { applicationSchema, roundSchema, signInSchema, signUpSchema, withAppliedOn } from './schemas';
 
 const valid = { company: 'Acme', role: 'SDE Intern', status: 'applied', apply_method: 'email', source: 'college_group' };
 
@@ -81,14 +81,5 @@ describe('auth schemas', () => {
     ]);
     expect(signUpSchema.safeParse({ email: 'me@example.com', password: 'x'.repeat(73) }).success).toBe(false);
     expect(signUpSchema.safeParse({ email: 'me@example.com', password: 'longenough' }).success).toBe(true);
-  });
-
-  it('rejects a bad email for password reset', () => {
-    expect(emailOnlySchema.safeParse({ email: 'nope' }).success).toBe(false);
-  });
-
-  it('requires the two new passwords to match', () => {
-    const r = newPasswordSchema.safeParse({ password: 'longenough', confirm: 'different1' });
-    expect(z.flattenError(r.error!).fieldErrors.confirm).toEqual(['Passwords do not match']);
   });
 });

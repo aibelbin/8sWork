@@ -18,8 +18,8 @@ Out of scope for iteration 1: finding or importing jobs, sharing applications be
 ## Users and access
 
 - Sign-in is email + password through Supabase Auth, which stores only password hashes. The app never stores passwords itself.
-- New accounts must confirm their email before signing in. Supabase sends confirmation and password-reset emails through Gmail SMTP (the same Gmail account as the digest).
-- Email links use the token-hash flow (`/auth/confirm?token_hash=…&type=…`), so they work on a different device from the one used to sign up.
+- Email confirmation is off (Supabase `mailer_autoconfirm`): sign-up signs the user in straight away. Nobody proves they own the email, which is fine for a friends-only app.
+- There is no forgot-password flow, since it needs email. The admin resets a forgotten password with the Supabase admin API.
 - Passwords are 8–72 characters (72 is bcrypt's limit).
 - A `profiles` row is created when an account is created.
 - Each user's data is private. Row-level security (RLS) is enabled on every table with the policy `user_id = auth.uid()` for select, insert, update and delete.
@@ -76,14 +76,11 @@ Out of scope for iteration 1: finding or importing jobs, sharing applications be
 
 ## Pages
 
-All pages are mobile-friendly. Every page except `/login` and `/auth/*` redirects signed-out users to `/login`.
+All pages are mobile-friendly. Every page except `/login` redirects signed-out users to `/login`.
 
-- **`/login`**: three modes on one page:
+- **`/login`**: two modes on one page:
   - **Sign in**: email + password.
-  - **Create an account** (`?mode=signup`): email + password, then "check your email".
-  - **Forgot password** (`?mode=forgot`): email only. The reply is the same whether or not the account exists.
-- **`/auth/confirm`**: verifies the token from a confirmation email (then goes to `/`) or a reset email (then goes to `/reset-password`).
-- **`/reset-password`**: new password + confirm, for a signed-in user arriving from a reset link.
+  - **Create an account** (`?mode=signup`): email + password, then straight into the app.
 - **`/` (Today)**: four lists:
   - Overdue: `follow_up_on < today`.
   - Due today: `follow_up_on = today`.
@@ -173,10 +170,7 @@ Public:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_SITE_URL`, used for links in emails
 
-Supabase Auth settings (dashboard):
-- Custom SMTP: `smtp.gmail.com`, port 465, the Gmail address and app password.
-- "Confirm sign up" and "Reset password" email templates link to `{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email` and `…&type=recovery`.
-- Redirect URLs include `http://localhost:3000/auth/confirm` and the production `/auth/confirm`.
+Supabase Auth settings: "Confirm email" off (`mailer_autoconfirm = true`), Site URL `https://8intepani.vercel.app`.
 
 ## Testing
 
@@ -185,7 +179,7 @@ Supabase Auth settings (dashboard):
   - `buildDigests`: boundaries for overdue, today and the 2-day deadline window in IST; users with no items get nothing; closed applications are excluded.
 - **RLS check:** a script signs in as two test users and confirms user B cannot select or update user A's application or rounds.
 - **Manual end-to-end on a Vercel preview:**
-  1. Create an account, confirm it from the email, and sign in. Also try forgot password.
+  1. Create an account and land in the app signed in.
   2. Add an application and a round, and confirm they show on the Today page.
   3. Call the cron route with the secret and confirm the email arrives.
   4. Call it again and confirm no second email.
