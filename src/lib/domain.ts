@@ -30,6 +30,25 @@ export type Application = {
   applied_on: string | null;
   follow_up_on: string | null;
   notes: string | null;
+  posting_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Posting = {
+  id: string;
+  created_by: string | null;
+  origin: 'shared';
+  company: string;
+  role: string;
+  apply_method: ApplyMethod;
+  job_url: string | null;
+  contact_email: string | null;
+  job_type: JobType | null;
+  location: string | null;
+  salary: string | null;
+  deadline: string | null;
+  details: string | null;
   created_at: string;
   updated_at: string;
 };

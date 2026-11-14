@@ -1,4 +1,4 @@
-import type { Application, Profile, Round } from './domain';
+import type { Application, Posting, Profile, Round } from './domain';
 
 let seq = 0;
 
@@ -23,6 +23,29 @@ export function makeApp(patch: Partial<Application> = {}): Application {
     applied_on: '2026-11-01',
     follow_up_on: null,
     notes: null,
+    posting_id: null,
+    created_at: '2026-11-01T00:00:00Z',
+    updated_at: '2026-11-01T00:00:00Z',
+    ...patch,
+  };
+}
+
+export function makePosting(patch: Partial<Posting> = {}): Posting {
+  seq++;
+  return {
+    id: `posting-${seq}`,
+    created_by: 'u2',
+    origin: 'shared',
+    company: `Company ${seq}`,
+    role: 'SDE',
+    apply_method: 'form',
+    job_url: null,
+    contact_email: null,
+    job_type: null,
+    location: null,
+    salary: null,
+    deadline: null,
+    details: null,
     created_at: '2026-11-01T00:00:00Z',
     updated_at: '2026-11-01T00:00:00Z',
     ...patch,

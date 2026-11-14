@@ -48,6 +48,28 @@ try {
 
   const profiles = await b.client.from('profiles').select('id');
   check(profiles.data?.length === 1 && profiles.data[0].id === b.id, 'B sees only their own profile');
+
+  const { data: posting, error: postingError } = await a.client
+    .from('postings')
+    .insert({ company: 'Shared Co', role: 'SDE', apply_method: 'form' })
+    .select()
+    .single();
+  if (postingError) throw postingError;
+
+  const seen = await b.client.from('postings').select('id').eq('id', posting.id);
+  check(seen.data?.length === 1, "B can read A's posting");
+
+  const edited = await b.client.from('postings').update({ company: 'hacked' }).eq('id', posting.id).select();
+  check(edited.data?.length === 0, "B cannot update A's posting");
+
+  const removed = await b.client.from('postings').delete().eq('id', posting.id).select();
+  check(removed.data?.length === 0, "B cannot delete A's posting");
+
+  const forged = await b.client.from('postings').insert({ company: 'X', role: 'Y', apply_method: 'form', created_by: a.id });
+  check(forged.error !== null, 'B cannot post as A');
+
+  const own = await b.client.from('postings').insert({ company: 'B Co', role: 'SDE', apply_method: 'email' }).select();
+  check(own.data?.length === 1, 'B can share their own posting');
 } finally {
   await admin.auth.admin.deleteUser(a.id);
   await admin.auth.admin.deleteUser(b.id);
